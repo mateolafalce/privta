@@ -85,7 +85,7 @@ npm install
 npm run dev
 ```
 
-`npm run dev` compiles the TypeScript sources in `js/` to `dist/` and starts
+`npm run dev` compiles the TypeScript sources in `src/` to `dist/` and starts
 the Python static server. Open `http://127.0.0.1:4173` in a WebMCP-capable
 browser. The included shim also keeps local development testable in ordinary
 browsers.
@@ -98,7 +98,7 @@ To export the deterministic, fictional 2,400-transaction seed:
 
 ## WebMCP design
 
-`js/webmcp.ts` registers tools through `document.modelContext.registerTool`.
+`src/webmcp.ts` registers tools through `document.modelContext.registerTool`.
 `show_financial_summary` runs fixed SQL templates against a local DuckDB-Wasm
 database for spending, income, or net cash flow, including the fixed
 `last_7_days` and `last_30_days` periods. The read-only tool set also supports
@@ -139,8 +139,3 @@ Use these prompts in ChatGPT Desktop to explore Privta's local WebMCP tools:
 - “Show my recurring charges and identify subscriptions that might be duplicates.”
 - “Which of my expenses are statistically unusual, and why were they flagged?”
 - “Find my `GAMERX ONLINE` charges and dispute the most recent one as unrecognized.”
-
-The last query combines private local analysis with a write operation, which
-requires native human approval before it executes. All accounts, services,
-transactions, and transfers contain fictional USD values; there is no backend,
-login, server database, or real money integration.

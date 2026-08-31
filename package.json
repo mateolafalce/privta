@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "build:site": "npm run build && node scripts/build-site.mjs",
     "typecheck": "tsc --noEmit",
     "watch": "tsc --watch",
     "dev": "tsc && .venv/bin/python scripts/serve.py",
@@ -14,4 +15,3 @@
     "typescript": "^5.9.2"
   }
 }
-
