@@ -1,6 +1,6 @@
-import { accounts, cards, contacts, services, createTransactions } from "./data.js";
+import { accounts, contacts, services, createTransactions } from "./data.js";
 
-const STORAGE_KEY = "privta-demo-state-v1";
+const STORAGE_KEY = "privta-demo-state-v8";
 const listeners = new Set();
 const baseState = {
   ready: false,
@@ -8,14 +8,26 @@ const baseState = {
   selectedAccount: "checking",
   selectedTransactionId: null,
   filters: { from: "", to: "", category: "", search: "", minAmount: "" }, activeRange: "",
-  accounts: structuredClone(accounts), cards: structuredClone(cards), contacts, services: structuredClone(services),
-  transactions: [], insights: [], highlights: [], chart: null, appliedOps: [],
+  accounts: structuredClone(accounts), contacts, services: structuredClone(services),
+  transactions: [], insights: [], highlights: [], appliedOps: [],
 };
 const restored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
 export const state = { ...baseState, ...(restored || {}) };
 
-export function initStore() {
-  if (!state.transactions.length) state.transactions = createTransactions();
+async function fixedSeed() {
+  try {
+    const response = await fetch(new URL("../data/seed.json", import.meta.url));
+    if (!response.ok) throw new Error("The local transaction seed could not be loaded.");
+    return response.json();
+  } catch (cause) {
+    console.error("Fixed transaction seed failed to load; using the built-in fallback.", cause);
+    return createTransactions();
+  }
+}
+
+export async function initStore() {
+  if (!state.transactions.length) state.transactions = await fixedSeed();
+  if (!["transactions", "activity"].includes(state.activeView)) state.activeView = "transactions";
   state.ready = true;
   persist(); emit();
 }
@@ -25,8 +37,8 @@ export function subscribe(listener) { listeners.add(listener); return () => list
 function emit() { listeners.forEach((listener) => listener(state)); }
 function persist() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    accounts: state.accounts, cards: state.cards, services: state.services, transactions: state.transactions,
-    insights: state.insights, highlights: state.highlights, chart: state.chart, appliedOps: state.appliedOps,
+    accounts: state.accounts, services: state.services, transactions: state.transactions,
+    insights: state.insights, highlights: state.highlights, appliedOps: state.appliedOps,
     activeRange: state.activeRange,
   }));
 }
