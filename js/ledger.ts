@@ -1,14 +1,52 @@
-const SEED_FILE = "privta-seed.json";
-let databasePromise;
-let duckDBLibraryPromise;
-let seededDatabasePromise;
+import type { AsyncDuckDB, DuckDBRow } from "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm";
+import type {
+  LedgerSummary,
+  LedgerTransaction,
+  MerchantExpense,
+  MerchantFilters,
+  MonthlySpending,
+  RecurringExpense,
+  SearchFilters,
+  SpendingComparison,
+  SummaryFilters,
+  SummaryMetric,
+  Transaction,
+  UnusualExpense,
+} from "./types.js";
 
-const sqlString = (value) => `'${String(value).replaceAll("'", "''")}'`;
-const asNumber = (value) => Number(value ?? 0);
-const asText = (value) => value == null ? "" : String(value);
+const SEED_FILE = "privta-seed.json";
+let databasePromise: Promise<AsyncDuckDB> | undefined;
+let duckDBLibraryPromise: Promise<typeof import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm")> | undefined;
+let seededDatabasePromise: Promise<AsyncDuckDB> | undefined;
+
+const DUCKDB_MODULE = "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm";
+const sqlString = (value: unknown) => `'${String(value).replaceAll("'", "''")}'`;
+const asNumber = (value: unknown) => Number(value ?? 0);
+const asText = (value: unknown) => value == null ? "" : String(value);
+const rowJson = (row: DuckDBRow) => row.toJSON();
+function asDate(value: unknown): string {
+  if (value == null || value === "") return "";
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  if (typeof value === "number" && Number.isFinite(value)) return new Date(value).toISOString().slice(0, 10);
+  const text = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
+  if (/^\d{10,13}$/.test(text)) {
+    const parsed = new Date(text.length <= 10 ? Number(text) * 1000 : Number(text));
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  }
+  return text;
+}
+
+interface QueryDefinition {
+  condition: string;
+  aggregate: string;
+  key: string;
+  totalLabel: string;
+  breakdownLabel: string;
+}
 
 function duckDBLibrary() {
-  if (!duckDBLibraryPromise) duckDBLibraryPromise = import("https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm");
+  if (!duckDBLibraryPromise) duckDBLibraryPromise = import(DUCKDB_MODULE);
   return duckDBLibraryPromise;
 }
 
@@ -47,16 +85,17 @@ async function seededDatabase() {
   return seededDatabasePromise;
 }
 
-function queryDefinition(metric) {
-  const definitions = {
+function queryDefinition(metric: unknown): QueryDefinition | null {
+  const definitions: Record<SummaryMetric, QueryDefinition> = {
     spending: { condition: "amount < 0", aggregate: "SUM(ABS(amount))", key: "category", totalLabel: "Spending total", breakdownLabel: "Largest categories" },
     income: { condition: "amount > 0", aggregate: "SUM(amount)", key: "merchant", totalLabel: "Income total", breakdownLabel: "Income sources" },
     net_cash_flow: { condition: "TRUE", aggregate: "SUM(amount)", key: "category", totalLabel: "Net cash flow", breakdownLabel: "Cash flow by category" },
   };
-  return definitions[metric] || null;
+  if (metric === "spending" || metric === "income" || metric === "net_cash_flow") return definitions[metric];
+  return null;
 }
 
-function filters({ from, to, period, categories, merchant_contains: merchantContains, recurring_only: recurringOnly }, definition) {
+function filters({ from, to, period, categories, merchant_contains: merchantContains, recurring_only: recurringOnly }: SummaryFilters, definition: { condition: string }) {
   const conditions = [definition.condition];
   if (from) conditions.push(`date >= ${sqlString(from)}`);
   if (to) conditions.push(`date <= ${sqlString(to)}`);
@@ -69,7 +108,7 @@ function filters({ from, to, period, categories, merchant_contains: merchantCont
 }
 
 /** Runs a fixed, local SQL template. User-provided values are only SQL literals. */
-export async function summarizeTransactions(filtersInput) {
+export async function summarizeTransactions(filtersInput: SummaryFilters): Promise<LedgerSummary> {
   const definition = queryDefinition(filtersInput.metric);
   if (!definition) throw new Error("Choose spending, income, or net_cash_flow.");
 
@@ -93,14 +132,14 @@ export async function summarizeTransactions(filtersInput) {
       GROUP BY ${definition.key}
       ORDER BY ABS(value) DESC, label ASC
     `);
-    const totals = summary.toArray()[0].toJSON();
+    const totals = rowJson(summary.toArray()[0] ?? { toJSON: () => ({}) });
     return {
       total: asNumber(totals.total),
       transactionCount: asNumber(totals.transaction_count),
-      coveredFrom: asText(totals.covered_from),
-      coveredTo: asText(totals.covered_to),
+      coveredFrom: asDate(totals.covered_from),
+      coveredTo: asDate(totals.covered_to),
       breakdown: breakdown.toArray().map((row) => {
-        const value = row.toJSON();
+        const value = rowJson(row);
         return { label: asText(value.label), value: asNumber(value.value) };
       }),
       totalLabel: definition.totalLabel,
@@ -111,7 +150,7 @@ export async function summarizeTransactions(filtersInput) {
   }
 }
 
-export async function appendTransaction(row) {
+export async function appendTransaction(row: Transaction) {
   const instance = await seededDatabase();
   const connection = await instance.connect();
   try {
@@ -128,7 +167,18 @@ export async function appendTransaction(row) {
   }
 }
 
-export async function latestExpense() {
+function asLedgerTransaction(row: Record<string, unknown>, absoluteAmount = false): LedgerTransaction {
+  return {
+    id: asText(row.id),
+    date: asDate(row.date),
+    amount: absoluteAmount ? Math.abs(asNumber(row.amount)) : asNumber(row.amount),
+    merchant: asText(row.merchant),
+    category: asText(row.category),
+    channel: asText(row.channel),
+  };
+}
+
+export async function latestExpense(): Promise<LedgerTransaction> {
   const instance = await seededDatabase();
   const connection = await instance.connect();
   try {
@@ -141,18 +191,15 @@ export async function latestExpense() {
     `);
     const row = result.toArray()[0]?.toJSON();
     if (!row) throw new Error("No expense transaction was found.");
-    return {
-      id: asText(row.id), date: asText(row.date), amount: Math.abs(asNumber(row.amount)),
-      merchant: asText(row.merchant), category: asText(row.category), channel: asText(row.channel),
-    };
+    return asLedgerTransaction(row, true);
   } finally {
     await connection.close();
   }
 }
 
 /** Returns the smallest or largest debit by absolute value from a fixed local SQL template. */
-export async function expenseBySize(direction) {
-  if (!['smallest', 'largest'].includes(direction)) throw new Error('Choose smallest or largest.');
+export async function expenseBySize(direction: string): Promise<LedgerTransaction> {
+  if (!["smallest", "largest"].includes(direction)) throw new Error("Choose smallest or largest.");
   const instance = await seededDatabase();
   const connection = await instance.connect();
   try {
@@ -160,22 +207,22 @@ export async function expenseBySize(direction) {
       SELECT id, date, amount, merchant, category, channel
       FROM transactions
       WHERE amount < 0
-      ORDER BY ABS(amount) ${direction === 'smallest' ? 'ASC' : 'DESC'}, date ASC, id ASC
+      ORDER BY ABS(amount) ${direction === "smallest" ? "ASC" : "DESC"}, date ASC, id ASC
       LIMIT 1
     `);
     const row = result.toArray()[0]?.toJSON();
-    if (!row) throw new Error('No expense transaction was found.');
-    return { id: asText(row.id), date: asText(row.date), amount: Math.abs(asNumber(row.amount)), merchant: asText(row.merchant), category: asText(row.category), channel: asText(row.channel) };
+    if (!row) throw new Error("No expense transaction was found.");
+    return asLedgerTransaction(row, true);
   } finally {
     await connection.close();
   }
 }
 
 /** Finds matching transactions using a fixed SELECT template and literal filters. */
-export async function searchTransactions({ from, to, categories, merchant_contains: merchantContains, min_amount: minAmount, max_amount: maxAmount, limit = 20 } = {}) {
+export async function searchTransactions({ from, to, categories, merchant_contains: merchantContains, min_amount: minAmount, max_amount: maxAmount, limit = 20 }: SearchFilters = {}): Promise<LedgerTransaction[]> {
   const instance = await seededDatabase();
   const connection = await instance.connect();
-  const conditions = [filters({ from, to, categories, merchant_contains: merchantContains }, { condition: 'TRUE' })];
+  const conditions = [filters({ from, to, categories, merchant_contains: merchantContains }, { condition: "TRUE" })];
   if (minAmount != null) conditions.push(`ABS(amount) >= ${asNumber(minAmount)}`);
   if (maxAmount != null) conditions.push(`ABS(amount) <= ${asNumber(maxAmount)}`);
   const safeLimit = Math.max(1, Math.min(50, Math.floor(Number(limit) || 20)));
@@ -183,21 +230,18 @@ export async function searchTransactions({ from, to, categories, merchant_contai
     const result = await connection.query(`
       SELECT id, date, amount, merchant, category, channel
       FROM transactions
-      WHERE ${conditions.join(' AND ')}
+      WHERE ${conditions.join(" AND ")}
       ORDER BY date DESC, id DESC
       LIMIT ${safeLimit}
     `);
-    return result.toArray().map((row) => {
-      const value = row.toJSON();
-      return { id: asText(value.id), date: asText(value.date), amount: asNumber(value.amount), merchant: asText(value.merchant), category: asText(value.category), channel: asText(value.channel) };
-    });
+    return result.toArray().map((row) => asLedgerTransaction(rowJson(row)));
   } finally {
     await connection.close();
   }
 }
 
 /** Returns fixed monthly spending buckets ending at the newest available transaction date. */
-export async function spendingByMonth(months) {
+export async function spendingByMonth(months: number): Promise<MonthlySpending[]> {
   const safeMonths = [3, 6, 12, 18].includes(Number(months)) ? Number(months) : 6;
   const instance = await seededDatabase();
   const connection = await instance.connect();
@@ -211,8 +255,8 @@ export async function spendingByMonth(months) {
       ORDER BY DATE_TRUNC('month', date) ASC
     `);
     return result.toArray().map((row) => {
-      const value = row.toJSON();
-      return { month: asText(value.month).slice(0, 10), amount: asNumber(value.amount), transactionCount: asNumber(value.transaction_count) };
+      const value = rowJson(row);
+      return { month: asDate(value.month), amount: asNumber(value.amount), transactionCount: asNumber(value.transaction_count) };
     });
   } finally {
     await connection.close();
@@ -220,7 +264,7 @@ export async function spendingByMonth(months) {
 }
 
 /** Compares the latest available 30 days of spending with the preceding 30 days. */
-export async function compareRecentSpending() {
+export async function compareRecentSpending(): Promise<SpendingComparison> {
   const instance = await seededDatabase();
   const connection = await instance.connect();
   try {
@@ -236,17 +280,17 @@ export async function compareRecentSpending() {
       FROM transactions, bounds
       WHERE amount < 0 AND date >= end_date - INTERVAL 59 DAY
     `);
-    const row = result.toArray()[0]?.toJSON();
+    const row = result.toArray()[0]?.toJSON() ?? {};
     const currentTotal = asNumber(row.current_total);
     const previousTotal = asNumber(row.previous_total);
-    return { currentTotal, previousTotal, currentTransactionCount: asNumber(row.current_transaction_count), previousTransactionCount: asNumber(row.previous_transaction_count), difference: currentTotal - previousTotal, percentChange: previousTotal ? (currentTotal - previousTotal) / previousTotal * 100 : null, from: asText(row.current_from), to: asText(row.current_to) };
+    return { currentTotal, previousTotal, currentTransactionCount: asNumber(row.current_transaction_count), previousTransactionCount: asNumber(row.previous_transaction_count), difference: currentTotal - previousTotal, percentChange: previousTotal ? (currentTotal - previousTotal) / previousTotal * 100 : null, from: asDate(row.current_from), to: asDate(row.current_to) };
   } finally {
     await connection.close();
   }
 }
 
 /** Groups recurring debits by merchant from the locally seeded ledger. */
-export async function recurringExpenses() {
+export async function recurringExpenses(): Promise<RecurringExpense[]> {
   const instance = await seededDatabase();
   const connection = await instance.connect();
   try {
@@ -258,17 +302,20 @@ export async function recurringExpenses() {
       GROUP BY merchant, category
       ORDER BY amount DESC, merchant ASC
     `);
-    return result.toArray().map((row) => { const value = row.toJSON(); return { merchant: asText(value.merchant), category: asText(value.category), amount: asNumber(value.amount), transactionCount: asNumber(value.transaction_count), firstDate: asText(value.first_date), lastDate: asText(value.last_date) }; });
+    return result.toArray().map((row) => {
+      const value = rowJson(row);
+      return { merchant: asText(value.merchant), category: asText(value.category), amount: asNumber(value.amount), transactionCount: asNumber(value.transaction_count), firstDate: asDate(value.first_date), lastDate: asDate(value.last_date) };
+    });
   } finally {
     await connection.close();
   }
 }
 
 /** Groups debit spending by merchant using a fixed local SQL template. */
-export async function merchantExpenses({ from, to, merchant_contains: merchantContains, limit = 10 } = {}) {
+export async function merchantExpenses({ from, to, merchant_contains: merchantContains, limit = 10 }: MerchantFilters = {}): Promise<MerchantExpense[]> {
   const instance = await seededDatabase();
   const connection = await instance.connect();
-  const where = filters({ from, to, merchant_contains: merchantContains }, { condition: 'amount < 0' });
+  const where = filters({ from, to, merchant_contains: merchantContains }, { condition: "amount < 0" });
   const safeLimit = Math.max(1, Math.min(25, Math.floor(Number(limit) || 10)));
   try {
     const result = await connection.query(`
@@ -280,14 +327,17 @@ export async function merchantExpenses({ from, to, merchant_contains: merchantCo
       ORDER BY amount DESC, merchant ASC
       LIMIT ${safeLimit}
     `);
-    return result.toArray().map((row) => { const value = row.toJSON(); return { merchant: asText(value.merchant), amount: asNumber(value.amount), transactionCount: asNumber(value.transaction_count), firstDate: asText(value.first_date), lastDate: asText(value.last_date) }; });
+    return result.toArray().map((row) => {
+      const value = rowJson(row);
+      return { merchant: asText(value.merchant), amount: asNumber(value.amount), transactionCount: asNumber(value.transaction_count), firstDate: asDate(value.first_date), lastDate: asDate(value.last_date) };
+    });
   } finally {
     await connection.close();
   }
 }
 
 /** Flags debit transactions at least two standard deviations above the historical debit average. */
-export async function unusualExpenses({ limit = 10 } = {}) {
+export async function unusualExpenses({ limit = 10 }: { limit?: number } = {}): Promise<UnusualExpense[]> {
   const instance = await seededDatabase();
   const connection = await instance.connect();
   const safeLimit = Math.max(1, Math.min(25, Math.floor(Number(limit) || 10)));
@@ -304,14 +354,17 @@ export async function unusualExpenses({ limit = 10 } = {}) {
       ORDER BY ABS(amount) DESC, date DESC, id DESC
       LIMIT ${safeLimit}
     `);
-    return result.toArray().map((row) => { const value = row.toJSON(); return { id: asText(value.id), date: asText(value.date), amount: Math.abs(asNumber(value.amount)), merchant: asText(value.merchant), category: asText(value.category), channel: asText(value.channel), amountAboveAverage: asNumber(value.amount_above_average) }; });
+    return result.toArray().map((row) => {
+      const value = rowJson(row);
+      return { ...asLedgerTransaction(value, true), amountAboveAverage: asNumber(value.amount_above_average) };
+    });
   } finally {
     await connection.close();
   }
 }
 
 /** Returns one transaction at a fixed recency position; it never exposes arbitrary SQL. */
-export async function transactionByRecency(position) {
+export async function transactionByRecency(position: number): Promise<LedgerTransaction> {
   const offset = Math.max(0, Math.min(99, Math.floor(Number(position) || 1) - 1));
   const instance = await seededDatabase();
   const connection = await instance.connect();
@@ -324,10 +377,7 @@ export async function transactionByRecency(position) {
     `);
     const row = result.toArray()[0]?.toJSON();
     if (!row) throw new Error("No transaction was found at that position.");
-    return {
-      id: asText(row.id), date: asText(row.date), amount: asNumber(row.amount),
-      merchant: asText(row.merchant), category: asText(row.category), channel: asText(row.channel),
-    };
+    return asLedgerTransaction(row);
   } finally {
     await connection.close();
   }

@@ -12,6 +12,8 @@ class Handler(SimpleHTTPRequestHandler):
     def guess_type(self, path):
         if path.endswith(".js"):
             return "text/javascript"
+        if path.endswith(".map"):
+            return "application/json"
         return super().guess_type(path)
 
 
