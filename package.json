@@ -1,0 +1,10 @@
+{
+  "name": "privta",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": ".venv/bin/python scripts/serve.py",
+    "seed": ".venv/bin/python scripts/seed.py"
+  }
+}

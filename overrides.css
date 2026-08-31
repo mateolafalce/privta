@@ -1,0 +1,55 @@
+.insight.severity-high {
+  background: #fff0f3;
+  border-color: #ffc8d2;
+  border-left-color: var(--danger);
+}
+
+/* Interaction and hierarchy refinements for the account overview. */
+.workspace { padding-top: 30px; }
+.topbar { gap: 24px; margin-bottom: 24px; }
+.topbar-actions { display: flex; gap: 9px; }
+.update-status { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; color: var(--muted); font-size: 10px; }
+.update-status span { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 3px #dff1ef; }
+.tabs { margin-bottom: 22px; }
+.summary-grid { margin-bottom: 22px; }
+.summary-card { min-height: 143px; }
+.summary-card strong { margin-top: 10px; }
+.summary-card.credit-card { background: linear-gradient(135deg, #fff 0%, #fffbfb 100%); }
+.summary-card.credit-card > strong { color: #7e313a; }
+.card-payment { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid #f0dcdf; }
+.card-payment span { color: #7b5a5e; font-size: 9px; }
+.card-payment strong { margin: 0; color: #873943; font-family: inherit; font-size: 10px; font-weight: 800; letter-spacing: 0; }
+.filters-panel { padding-top: 20px; padding-bottom: 21px; }
+.filter-quick-actions { display: flex; align-items: center; gap: 10px; margin-top: 17px; color: var(--slate); font-size: 10px; }
+.filter-quick-actions > span { font-weight: 750; }
+.quick-range { display: flex; gap: 5px; }
+.quick-range button { border: 1px solid #d4e0e2; border-radius: 99px; background: #fff; color: #496579; padding: 4px 8px; font: 700 9px inherit; cursor: pointer; }
+.quick-range button:hover, .quick-range button.active { border-color: #76b6b7; background: #eaf5f3; color: #125e69; }
+.filter-status { margin: 0 0 0 auto; color: var(--muted); font-size: 10px; text-align: right; }
+.filters { margin-top: 18px; }
+tbody tr.selected { background: #e5f3f1; box-shadow: inset 3px 0 var(--teal); }
+.transaction-detail { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: -3px 0 20px; padding: 17px 20px; border: 1px solid #bedbd8; border-left: 3px solid var(--teal); background: #f5fbfa; }
+.transaction-detail:empty { display: none; }
+.transaction-detail h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 18px; font-weight: 400; }
+.transaction-detail p:not(.eyebrow) { margin: 3px 0 0; color: var(--muted); font-size: 11px; }
+.transaction-detail-amount { display: grid; justify-items: end; gap: 6px; }
+.transaction-detail-amount strong { font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 400; }
+.button.primary:hover { background: #123657; }
+.button.secondary:hover { background: #dfe9e9; }
+
+@media (max-width: 850px) {
+  .workspace { padding-top: 22px; }
+  .topbar-actions { margin-bottom: 2px; }
+  .filter-quick-actions { flex-wrap: wrap; }
+  .filter-status { width: 100%; margin-left: 0; text-align: left; }
+}
+
+@media (max-width: 620px) {
+  .topbar { align-items: flex-start; }
+  .topbar-actions { width: 100%; }
+  .topbar-actions .button { flex: 1; min-height: 40px; }
+  .quick-range { width: 100%; overflow-x: auto; padding-bottom: 2px; }
+  .quick-range button { flex: 0 0 auto; }
+  .transaction-detail { display: block; padding: 16px; }
+  .transaction-detail-amount { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+}

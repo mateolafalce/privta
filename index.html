@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Privta: an agent-native, private banking demo." />
+    <title>Privta</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="overrides.css" />
+  </head>
+  <body>
+    <div class="privacy-banner"><span>PRIVTA PRIVATE BANK</span><span>Demo environment · Fictional funds · Your transactions remain in this browser</span></div>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#transactions" aria-label="Privta"><span class="brand-name">Privta <small>Private Bank</small></span></a>
+        <div class="sidebar-rule"></div>
+        <p class="section-label">Portfolio</p>
+        <nav id="account-list" class="account-list" aria-label="Accounts"></nav>
+        <p class="section-label">Intelligence</p>
+        <nav class="quick-nav">
+          <button data-view="transactions">Transactions</button>
+          <button data-view="analysis">Analysis</button>
+          <button data-view="activity">Activity <span id="pending-badge" class="badge">0</span></button>
+        </nav>
+        <div class="sidebar-foot"><span>Private client</span><strong>Ethan Miller</strong><small>New York · United States</small></div>
+      </aside>
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">CLIENT OVERVIEW · AUGUST 2026</p>
+            <h1 id="view-title">Transactions</h1>
+            <p class="update-status"><span></span>Balances updated today at 9:42 AM</p>
+          </div>
+          <div class="topbar-actions" aria-label="Account actions">
+            <button class="button secondary" data-action="statement">Statements</button>
+            <button class="button primary" data-action="transfer">Transfer money</button>
+          </div>
+        </header>
+        <section class="tabs" aria-label="Vistas">
+          <button class="active" data-view="transactions">Transactions</button>
+          <button data-view="analysis">Analysis</button>
+          <button data-view="activity">Activity <span id="pending-tab-count"></span></button>
+        </section>
+        <section id="view-transactions" class="view active">
+          <div class="summary-grid" id="account-summary"></div>
+          <section class="panel filters-panel">
+            <div class="panel-heading"><div><h2>Activity</h2><p id="transaction-count">Loading transactions…</p></div><button id="reset-filters" class="text-button">Clear filters</button></div>
+            <div class="filter-quick-actions">
+              <span>Quick period</span>
+              <div class="quick-range" role="group" aria-label="Quick date filters">
+                <button type="button" data-range="7">Last 7 days</button>
+                <button type="button" data-range="30">Last 30 days</button>
+                <button type="button" data-range="month">This month</button>
+              </div>
+              <p id="filter-status" class="filter-status" aria-live="polite"></p>
+            </div>
+            <form id="filters" class="filters">
+              <label>From<input id="filter-from" type="date" /></label>
+              <label>To<input id="filter-to" type="date" /></label>
+              <label>Category<select id="filter-category"><option value="">All categories</option></select></label>
+              <label>Search<input id="filter-search" type="search" placeholder="Merchant or detail" /></label>
+              <label>Minimum amount<input id="filter-min" type="number" min="0" placeholder="$ 0" /></label>
+            </form>
+          </section>
+          <section class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Merchant</th><th>Category</th><th>Channel</th><th class="amount">Amount</th></tr></thead><tbody id="transaction-table"></tbody></table></div></section>
+          <section id="transaction-detail" class="transaction-detail" aria-live="polite"></section>
+        </section>
+        <section id="view-analysis" class="view">
+          <div id="insights" class="insights"></div>
+          <div class="analysis-grid"><section class="panel chart-panel"><div class="panel-heading"><div><h2>Spending by category</h2><p>Last 30 days</p></div></div><div id="chart" class="chart" role="img" aria-label="Spending chart"></div></section><section class="panel discovery"><h2>Ask your agent</h2><button data-prompt="Where is my money going?">Where is my money going?</button><button data-prompt="Is anything unusual in my recurring charges?">Is anything unusual?</button><button data-prompt="Compare this period with last year">Compare with last year</button><p>In ChatGPT, use these questions to let your agent work with your current view.</p></section></div>
+        </section>
+        <section id="view-activity" class="view"><div id="pending-ops" class="pending-ops"></div></section>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
