@@ -10,13 +10,15 @@ financial integration may be introduced without an explicit product decision.
 
 - `index.html` and `styles.css` contain the responsive banking UI.
 - `data/seed.json` is the fixed, fictional transaction seed used by the UI and DuckDB-Wasm.
-- `js/data.js` contains the fixed account, contact, and service data, plus a seed fallback.
-- `js/store.js` loads the fixed transaction seed and persists runtime state in `localStorage`.
-- `js/ledger.js` loads DuckDB-Wasm only when a financial summary is requested, imports the fixed seed into a local SQL table, and runs fixed SQL summary templates.
-- `js/result-view.js` renders local SQL results in the visible document.
-- `js/webmcp.js` installs the native WebMCP context or a local development shim.
-- `js/tools.js` contains WebMCP tool definitions and dynamic registration.
-- `js/app.js` renders the account overview and transaction table.
+- `js/data.ts` contains the fixed account, contact, and service data, plus a seed fallback.
+- `js/store.ts` loads the fixed transaction seed and persists runtime state in `localStorage`.
+- `js/ledger.ts` loads DuckDB-Wasm only when a financial summary is requested, imports the fixed seed into a local SQL table, and runs fixed SQL summary templates.
+- `js/result-view.ts` renders local SQL results in the visible document.
+- `js/webmcp.ts` installs the native WebMCP context or a local development shim.
+- `js/tools.ts` contains WebMCP tool definitions and dynamic registration.
+- `js/app.ts` renders the account overview and transaction table.
+- `js/types.ts` holds shared TypeScript types for accounts, transactions, and local SQL results.
+- `tsc` emits browser ESM into `dist/`; the Python server still hosts those compiled files.
 - `scripts/seed.py` exports an inspectable JSON copy of the deterministic USD seed.
 
 ## Commands
@@ -24,11 +26,12 @@ financial integration may be introduced without an explicit product decision.
 Always use the repository virtual environment for Python:
 
 ```bash
-.venv/bin/python scripts/serve.py
+npm install
+npm run dev
 .venv/bin/python scripts/seed.py
 ```
 
-Create `.venv` first with `python3 -m venv .venv` if it is absent.
+Create `.venv` first with `python3 -m venv .venv` if it is absent. `npm run dev` compiles TypeScript and starts the Python static server.
 
 ## Product and safety rules
 
@@ -36,7 +39,7 @@ Create `.venv` first with `python3 -m venv .venv` if it is absent.
 - Use USD exclusively. Do not add another currency.
 - All demo values and identities must remain fictional.
 - Account data stays local to the browser. Keep read results bounded.
-- Financial aggregations must be computed through the fixed local SQL templates in `js/ledger.js`; do not reintroduce JavaScript aggregation over transactions.
+- Financial aggregations must be computed through the fixed local SQL templates in `js/ledger.ts`; do not reintroduce JavaScript aggregation over transactions.
 - Financial SQL results are intentionally rendered in the DOM and returned by their WebMCP tool. Keep the UI result and returned result aligned.
 - Register the initial tool set before loading the static seed. Natural periods must use fixed SQL (`last_7_days` or `last_30_days`), and ordinal transaction requests must use the fixed `transactionByRecency` SQL template.
 - Write tools use WebMCP/ChatGPT Desktop native approval. Do not add a duplicate

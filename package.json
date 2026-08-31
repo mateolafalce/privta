@@ -4,7 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": ".venv/bin/python scripts/serve.py",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "watch": "tsc --watch",
+    "dev": "tsc && .venv/bin/python scripts/serve.py",
     "seed": ".venv/bin/python scripts/seed.py"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
   }
 }
+

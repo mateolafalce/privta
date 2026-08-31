@@ -81,11 +81,14 @@ minimizing both data egress and the blast radius of a compromised component.
 
 ```bash
 python3 -m venv .venv  # only if it does not exist yet
-.venv/bin/python scripts/serve.py
+npm install
+npm run dev
 ```
 
-Open `http://127.0.0.1:4173` in a WebMCP-capable browser. The included shim
-also keeps local development testable in ordinary browsers.
+`npm run dev` compiles the TypeScript sources in `js/` to `dist/` and starts
+the Python static server. Open `http://127.0.0.1:4173` in a WebMCP-capable
+browser. The included shim also keeps local development testable in ordinary
+browsers.
 
 To export the deterministic, fictional 2,400-transaction seed:
 
@@ -95,7 +98,7 @@ To export the deterministic, fictional 2,400-transaction seed:
 
 ## WebMCP design
 
-`js/webmcp.js` registers tools through `document.modelContext.registerTool`.
+`js/webmcp.ts` registers tools through `document.modelContext.registerTool`.
 `show_financial_summary` runs fixed SQL templates against a local DuckDB-Wasm
 database for spending, income, or net cash flow, including the fixed
 `last_7_days` and `last_30_days` periods. The read-only tool set also supports
@@ -127,16 +130,17 @@ operation executes. Privta records approved actions locally.
 Tools are registered initially before state hydration, then refreshed using an
 `AbortController` to remove outdated registrations.
 
-## Demo data
+## Try these queries
 
-The single checking account, its services, transactions, and transfers use
-fictional USD values.
-The deterministic dataset covers 18 months and contains planted findings:
+Use these prompts in ChatGPT Desktop to explore Privta's local WebMCP tools:
 
-- Spotify and Spotify Premium as a possible duplicate subscription.
-- A water bill that increases more than 300%.
-- A recurring unfamiliar `GAMERX ONLINE` charge.
-- Seasonal July and December spending spikes.
-- A 12-installment purchase and a mid-period salary increase.
+- “How much did I spend in the last 30 days? Break it down by category.”
+- “Compare my spending in the latest 30 days with the previous 30 days.”
+- “Show my recurring charges and identify subscriptions that might be duplicates.”
+- “Which of my expenses are statistically unusual, and why were they flagged?”
+- “Find my `GAMERX ONLINE` charges and dispute the most recent one as unrecognized.”
 
-There is no backend, login, server database, or real money integration.
+The last query combines private local analysis with a write operation, which
+requires native human approval before it executes. All accounts, services,
+transactions, and transfers contain fictional USD values; there is no backend,
+login, server database, or real money integration.
