@@ -2,9 +2,7 @@ const seeded = (seed = 81427) => () => ((seed = (seed * 1664525 + 1013904223) >>
 const money = (value) => Math.round(value / 10) * 10;
 
 export const accounts = [
-  { id: "checking", type: "Everyday checking", currency: "USD", alias: "ethan.privta", balance: 12843, masked_number: "•••• 0381" },
-  { id: "savings", type: "High-yield savings", currency: "USD", alias: "ethan.savings.privta", balance: 8420, masked_number: "•••• 7194" },
-  { id: "visa", type: "Credit card", currency: "USD", alias: "Visa Privta", balance: -1824, masked_number: "•••• 8821" },
+  { id: "checking", type: "Everyday checking", currency: "USD", alias: "ethan.privta", balance: 19439, masked_number: "•••• 0381" },
 ];
 
 export const contacts = [
@@ -17,8 +15,6 @@ export const services = [
   { id: "energy", name: "Northstar Energy", type: "Electricity", amount: 28.84, due_date: "2026-09-08", status: "pending" },
   { id: "internet", name: "Fiberline", type: "Internet", amount: 22.5, due_date: "2026-09-15", status: "pending" },
 ];
-
-export const cards = [{ id: "visa-8821", account_id: "visa", brand: "VISA", last4: "8821", status: "active", limit: 18000, used: 1824 }];
 
 const categories = ["Groceries", "Dining", "Transport", "Health", "Home", "Entertainment", "Education", "Clothing", "Transfers"];
 const merchants = {
@@ -49,18 +45,18 @@ export function createTransactions() {
     const salary = month >= 10 ? 17500 : 13200;
     tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)), salary, "ACME Services", "Income", { channel: "Bank transfer", is_recurring: true }));
     tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 5)), -4250, "Emma Williams", "Transfers", { channel: "Bank transfer", is_recurring: true }));
-    tx.push(entry(`tx-${id++}`, "visa", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 8)), -8.4, "Spotify", "Entertainment", { is_recurring: true }));
-    tx.push(entry(`tx-${id++}`, "visa", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 9)), -9.9, "Spotify Premium", "Entertainment", { is_recurring: true }));
+    tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 8)), -8.4, "Spotify", "Entertainment", { is_recurring: true }));
+    tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 9)), -9.9, "Spotify Premium", "Entertainment", { is_recurring: true }));
     const water = month < 12 ? 3.1 + month * .42 : 13.6;
     tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 10)), -water, "Clearwater Utility", "Home", { channel: "Auto-debit", is_recurring: true }));
-    tx.push(entry(`tx-${id++}`, "visa", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 16)), -23.45, "GAMERX ONLINE", "Entertainment", { is_recurring: true }));
-    if (month >= 11 && month < 23) tx.push(entry(`tx-${id++}`, "visa", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 18)), -75.4, "Northstar Laptop — installment " + (month - 10) + "/12", "Education", { installments: 12, channel: "Card" }));
+    tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 16)), -23.45, "GAMERX ONLINE", "Entertainment", { is_recurring: true }));
+    if (month >= 11 && month < 23) tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), 18)), -75.4, "Northstar Laptop — installment " + (month - 10) + "/12", "Education", { installments: 12, channel: "Card" }));
     for (let n = 0; n < 127; n++) {
       const category = categories[Math.floor(random() * categories.length)];
       const merchant = merchants[category][Math.floor(random() * merchants[category].length)];
       const day = 2 + Math.floor(random() * 26);
       const amount = -(7 + random() * (category === "Groceries" ? 780 : 240) * seasonal);
-      tx.push(entry(`tx-${id++}`, random() > .22 ? "visa" : "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), day)), amount, merchant, category, { channel: random() > .55 ? "Card" : "QR" }));
+      tx.push(entry(`tx-${id++}`, "checking", iso(new Date(monthDate.getFullYear(), monthDate.getMonth(), day)), amount, merchant, category, { channel: random() > .55 ? "Card" : "QR" }));
     }
   }
   return tx.slice(0, 2400).sort((a, b) => b.date.localeCompare(a.date));

@@ -1,5 +1,7 @@
 /** WebMCP adapter. Native modelContext is preferred; the shim keeps local demos testable. */
 const SHIM_FLAG = "__privtaWebMCPShim";
+let installedContext;
+let installedSource = "unavailable";
 class ModelContextShim extends EventTarget {
   #tools = new Map();
   constructor() { super(); this[SHIM_FLAG] = true; }
@@ -21,10 +23,17 @@ class ModelContextShim extends EventTarget {
 }
 export function installWebMCP() {
   const native = document.modelContext ?? navigator.modelContext;
-  if (native?.registerTool) return { context: native, source: native[SHIM_FLAG] ? "shim" : "native" };
+  if (native?.registerTool) {
+    installedContext = native;
+    installedSource = native[SHIM_FLAG] ? "shim" : "native";
+    return { context: installedContext, source: installedSource };
+  }
   const shim = new ModelContextShim();
   Object.defineProperty(document, "modelContext", { configurable: true, get: () => shim });
-  return { context: shim, source: "shim" };
+  installedContext = shim;
+  installedSource = "shim";
+  return { context: installedContext, source: installedSource };
 }
-export const getModelContext = () => document.modelContext ?? navigator.modelContext;
+export const getModelContext = () => installedContext ?? document.modelContext ?? navigator.modelContext;
+export const getModelContextSource = () => installedSource;
 export async function onToolsChanged(callback) { getModelContext()?.addEventListener?.("toolchange", callback); }

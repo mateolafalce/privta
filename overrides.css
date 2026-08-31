@@ -4,6 +4,9 @@
   border-left-color: var(--danger);
 }
 
+/* The workspace is now the single navigation and account context. */
+.app-shell { display: block; }
+
 /* Interaction and hierarchy refinements for the account overview. */
 .workspace { padding-top: 30px; }
 .topbar { gap: 24px; margin-bottom: 24px; }
@@ -12,6 +15,7 @@
 .update-status span { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 3px #dff1ef; }
 .tabs { margin-bottom: 22px; }
 .summary-grid { margin-bottom: 22px; }
+.summary-grid { grid-template-columns: minmax(0, 1fr); }
 .summary-card { min-height: 143px; }
 .summary-card strong { margin-top: 10px; }
 .summary-card.credit-card { background: linear-gradient(135deg, #fff 0%, #fffbfb 100%); }
@@ -19,13 +23,12 @@
 .card-payment { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid #f0dcdf; }
 .card-payment span { color: #7b5a5e; font-size: 9px; }
 .card-payment strong { margin: 0; color: #873943; font-family: inherit; font-size: 10px; font-weight: 800; letter-spacing: 0; }
-.filters-panel { padding-top: 20px; padding-bottom: 21px; }
-.filter-quick-actions { display: flex; align-items: center; gap: 10px; margin-top: 17px; color: var(--slate); font-size: 10px; }
-.filter-quick-actions > span { font-weight: 750; }
 .quick-range { display: flex; gap: 5px; }
 .quick-range button { border: 1px solid #d4e0e2; border-radius: 99px; background: #fff; color: #496579; padding: 4px 8px; font: 700 9px inherit; cursor: pointer; }
 .quick-range button:hover, .quick-range button.active { border-color: #76b6b7; background: #eaf5f3; color: #125e69; }
-.filter-status { margin: 0 0 0 auto; color: var(--muted); font-size: 10px; text-align: right; }
+.transaction-table-heading { padding: 18px 22px 14px; }
+.transaction-table-heading h2 { margin: 0; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 400; letter-spacing: -.025em; }
+.transaction-table-heading p { margin: 2px 0 0; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .filters { margin-top: 18px; }
 tbody tr.selected { background: #e5f3f1; box-shadow: inset 3px 0 var(--teal); }
 .transaction-detail { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: -3px 0 20px; padding: 17px 20px; border: 1px solid #bedbd8; border-left: 3px solid var(--teal); background: #f5fbfa; }
@@ -36,12 +39,29 @@ tbody tr.selected { background: #e5f3f1; box-shadow: inset 3px 0 var(--teal); }
 .transaction-detail-amount strong { font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 400; }
 .button.primary:hover { background: #123657; }
 .button.secondary:hover { background: #dfe9e9; }
+.query-result { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 30px; margin: -2px 0 22px; padding: 22px 54px 20px 24px; border: 1px solid #9ccbc8; border-top: 3px solid var(--teal); background: linear-gradient(110deg, #f2fbfa 0%, #fff 62%); box-shadow: var(--shadow); }
+.query-result:empty { display: none; }
+.query-result-close { position: absolute; top: 12px; right: 13px; display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--slate); font: 400 24px/1 Arial, sans-serif; cursor: pointer; }
+.query-result-close:hover { border-color: #9ccbc8; background: #e7f4f2; color: var(--navy); }
+.query-result-close:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.query-result-copy h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 400; letter-spacing: -.025em; }
+.query-result-copy > p:last-child { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+.query-result-total { display: grid; justify-items: end; align-content: start; gap: 3px; min-width: 155px; }
+.query-result-total > span, .query-result-breakdown > p { margin: 0; color: var(--slate); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.query-result-total > strong { color: var(--navy); font-family: Georgia, "Times New Roman", serif; font-size: 29px; font-weight: 400; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.query-result-breakdown { grid-column: 1 / -1; padding-top: 14px; border-top: 1px solid #d6e8e6; }
+.query-result-breakdown ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; margin: 10px 0 0; padding: 0; list-style: none; }
+.query-result-breakdown li { display: grid; grid-template-columns: minmax(74px, .75fr) minmax(42px, 1.4fr) auto; align-items: center; gap: 9px; min-width: 0; color: #4f6777; font-size: 10px; }
+.query-result-breakdown li > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.query-result-breakdown i { display: block; height: 5px; overflow: hidden; border-radius: 99px; background: #d9ebea; }
+.query-result-breakdown b { display: block; height: 100%; border-radius: inherit; background: var(--teal); }
+.query-result-breakdown strong { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; }
+.bar.negative { background: linear-gradient(180deg, #c97177, #873943); }
+.bar.negative:before { background: #efb1b5; }
 
 @media (max-width: 850px) {
   .workspace { padding-top: 22px; }
   .topbar-actions { margin-bottom: 2px; }
-  .filter-quick-actions { flex-wrap: wrap; }
-  .filter-status { width: 100%; margin-left: 0; text-align: left; }
 }
 
 @media (max-width: 620px) {
@@ -52,4 +72,8 @@ tbody tr.selected { background: #e5f3f1; box-shadow: inset 3px 0 var(--teal); }
   .quick-range button { flex: 0 0 auto; }
   .transaction-detail { display: block; padding: 16px; }
   .transaction-detail-amount { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+  .query-result { grid-template-columns: 1fr; gap: 12px; padding: 18px 48px 18px 16px; }
+  .query-result-copy h2 { font-size: 21px; }
+  .query-result-total { justify-items: start; }
+  .query-result-breakdown ul { grid-template-columns: 1fr; gap: 9px; }
 }

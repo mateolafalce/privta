@@ -55,18 +55,18 @@ def generate() -> list[dict[str, object]]:
         special = [
             ("checking", 1, salary, "ACME Services", "Income", {"channel": "Bank transfer", "is_recurring": True}),
             ("checking", 5, -4250, "Emma Williams", "Transfers", {"channel": "Bank transfer", "is_recurring": True}),
-            ("visa", 8, -8.4, "Spotify", "Entertainment", {"is_recurring": True}),
-            ("visa", 9, -9.9, "Spotify Premium", "Entertainment", {"is_recurring": True}),
+            ("checking", 8, -8.4, "Spotify", "Entertainment", {"is_recurring": True}),
+            ("checking", 9, -9.9, "Spotify Premium", "Entertainment", {"is_recurring": True}),
             ("checking", 10, -(3.1 + index * .42 if index < 12 else 13.6), "Clearwater Utility", "Home", {"channel": "Auto-debit", "is_recurring": True}),
-            ("visa", 16, -23.45, "GAMERX ONLINE", "Entertainment", {"is_recurring": True}),
+            ("checking", 16, -23.45, "GAMERX ONLINE", "Entertainment", {"is_recurring": True}),
         ]
         for account_id, day, amount, merchant, category, extra in special:
             rows.append(make_transaction(identifier, account_id, month_date(year, month, day), amount, merchant, category, **extra)); identifier += 1
         if index >= 11:
-            rows.append(make_transaction(identifier, "visa", month_date(year, month, 18), -75.4, f"Northstar Laptop — installment {index - 10}/12", "Education", installments=12)); identifier += 1
+            rows.append(make_transaction(identifier, "checking", month_date(year, month, 18), -75.4, f"Northstar Laptop — installment {index - 10}/12", "Education", installments=12)); identifier += 1
         for _ in range(127):
             category = rng.choice(categories)
-            rows.append(make_transaction(identifier, "visa" if rng.random() > .22 else "checking", month_date(year, month, rng.randint(2, 27)), -(7 + rng.random() * (780 if category == "Groceries" else 240) * seasonal), rng.choice(merchants[category]), category, channel="Card" if rng.random() > .55 else "QR")); identifier += 1
+            rows.append(make_transaction(identifier, "checking", month_date(year, month, rng.randint(2, 27)), -(7 + rng.random() * (780 if category == "Groceries" else 240) * seasonal), rng.choice(merchants[category]), category, channel="Card" if rng.random() > .55 else "QR")); identifier += 1
     return sorted(rows[:2400], key=lambda row: str(row["date"]), reverse=True)
 
 
