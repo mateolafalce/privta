@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate Privta's deterministic USD demo dataset as JSON.
 
-The browser uses the equivalent generator in js/data.ts so the static demo has
+The browser uses the equivalent generator in src/data.ts so the static demo has
 no loading dependency. This script is useful for inspecting or exporting the
 same fictional seed during development.
 """
