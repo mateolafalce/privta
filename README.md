@@ -85,10 +85,14 @@ npm install
 npm run dev
 ```
 
-`npm run dev` compiles the TypeScript sources in `src/` to `dist/` and starts
-the Python static server. Open `http://127.0.0.1:4173` in a WebMCP-capable
-browser. The included shim also keeps local development testable in ordinary
-browsers.
+`npm run dev` runs `tsc` to compile the TypeScript sources in `src/` to browser
+ESM in `dist/`, then starts the Python static server. The page loads
+`dist/app.js`; the TypeScript sources are not served. Open
+`http://127.0.0.1:4173` in a WebMCP-capable browser. The included shim also
+keeps local development testable in ordinary browsers.
+
+Use `npm run typecheck` to type-check without emitting files, and
+`npm run watch` to recompile on change.
 
 To export the deterministic, fictional 2,400-transaction seed:
 
@@ -98,12 +102,15 @@ To export the deterministic, fictional 2,400-transaction seed:
 
 ## WebMCP design
 
-`src/webmcp.ts` registers tools through `document.modelContext.registerTool`.
-`show_financial_summary` runs fixed SQL templates against a local DuckDB-Wasm
-database for spending, income, or net cash flow, including the fixed
-`last_7_days` and `last_30_days` periods. The read-only tool set also supports
-transaction search, historical smallest/largest expenses, monthly and recent
-period spending comparisons, category and merchant breakdowns, recurring
+`src/webmcp.ts` installs the native `document.modelContext` or a local
+development shim. `src/tools.ts` registers tools through
+`document.modelContext.registerTool`.
+
+`show_financial_summary` runs fixed SQL templates in `src/ledger.ts` against a
+local DuckDB-Wasm database for spending, income, or net cash flow, including
+the fixed `last_7_days` and `last_30_days` periods. The read-only tool set also
+supports transaction search, historical smallest/largest expenses, monthly and
+recent period spending comparisons, category and merchant breakdowns, recurring
 debits, current account balances, and statistically unusual debits. The
 `show_transaction_by_recency` tool covers ordinal requests such as “the tenth
 most recent transaction.” Each result is rendered in the page's DOM and
@@ -127,8 +134,10 @@ They use `destructiveHint: true` and explicitly describe their side effect, so
 ChatGPT Desktop can present its native human-approval interface before the
 operation executes. Privta records approved actions locally.
 
-Tools are registered initially before state hydration, then refreshed using an
-`AbortController` to remove outdated registrations.
+`src/app.ts` registers tools before hydrating local state, then refreshes
+them after the seed loads. The refresh uses an `AbortController` to drop
+outdated registrations, including write-tool enums that depend on contacts
+or accounts.
 
 ## Try these queries
 
@@ -139,3 +148,8 @@ Use these prompts in ChatGPT Desktop to explore Privta's local WebMCP tools:
 - “Show my recurring charges and identify subscriptions that might be duplicates.”
 - “Which of my expenses are statistically unusual, and why were they flagged?”
 - “Find my `GAMERX ONLINE` charges and dispute the most recent one as unrecognized.”
+
+The last query combines private local analysis with a write operation, which
+requires native human approval before it executes. All accounts, services,
+transactions, and transfers contain fictional USD values; there is no backend,
+login, server database, or real money integration.
